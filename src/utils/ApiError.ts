@@ -1,0 +1,20 @@
+export class ApiError extends Error {
+  statusCode: number;
+  isOperational: boolean;
+
+  constructor(statusCode: number, message: string, isOperational = true) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = isOperational;
+
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export const notFound = (resource: string = 'Resource') => {
+  return new ApiError(404, `${resource} not found`);
+};
+
+export const badRequest = (message: string) => {
+  return new ApiError(400, message);
+};
