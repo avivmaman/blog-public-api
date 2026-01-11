@@ -127,4 +127,41 @@ export const articleService = {
   async incrementViews(slug: string): Promise<void> {
     await Article.updateOne({ slug }, { $inc: { views: 1 } });
   },
+
+  async searchArticles(
+    query: string,
+    options: { page: number; limit: number }
+  ): Promise<ArticleListResult> {
+    const { page, limit } = options;
+    const skip = (page - 1) * limit;
+
+    // Create text search query
+    const searchQuery = {
+      $or: [
+        { title: { $regex: query, $options: 'i' } },
+        { excerpt: { $regex: query, $options: 'i' } },
+        { content: { $regex: query, $options: 'i' } },
+        { tags: { $regex: query, $options: 'i' } },
+      ],
+    };
+
+    const [articles, total] = await Promise.all([
+      Article.find(searchQuery)
+        .populate('category', 'name slug')
+        .populate('author', 'name avatar role')
+        .sort({ views: -1, publishedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Article.countDocuments(searchQuery),
+    ]);
+
+    return {
+      articles: articles as IArticleDocument[],
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  },
 };

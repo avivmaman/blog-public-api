@@ -79,4 +79,33 @@ export const articleController = {
       data: comments,
     });
   }),
+
+  // GET /api/articles/search?q=query
+  search: asyncHandler(async (req: Request, res: Response) => {
+    const query = req.query.q as string;
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 10, 50);
+
+    if (!query || query.trim().length < 2) {
+      res.json({
+        success: true,
+        data: [],
+        meta: { page: 1, limit, total: 0, totalPages: 0 },
+      });
+      return;
+    }
+
+    const result = await articleService.searchArticles(query.trim(), { page, limit });
+
+    res.json({
+      success: true,
+      data: result.articles,
+      meta: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPages: result.totalPages,
+      },
+    });
+  }),
 };

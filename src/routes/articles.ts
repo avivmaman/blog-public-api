@@ -11,6 +11,9 @@ router.get('/', validateQuery(paginationSchema), articleController.getArticles);
 // Note: This route must come before /:slug to avoid conflict
 router.get('/trending', articleController.getTrending);
 
+// GET /api/articles/search?q=query - Search articles
+router.get('/search', articleController.search);
+
 // GET /api/articles/:slug - Get single article by slug
 router.get('/:slug', validateParams(slugSchema), articleController.getBySlug);
 
