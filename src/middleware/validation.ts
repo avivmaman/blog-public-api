@@ -2,11 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { z, ZodSchema, ZodError } from 'zod';
 import { ApiError } from '../utils/ApiError';
 
+// Store parsed values in res.locals instead of mutating req
 export const validateQuery = <T extends ZodSchema>(schema: T) => {
-  return (req: Request, _res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = schema.parse(req.query);
-      req.query = result as typeof req.query;
+      // Store validated query in res.locals for use in controllers
+      res.locals.validatedQuery = result;
       next();
     } catch (error) {
       if (error instanceof ZodError) {
@@ -20,10 +22,11 @@ export const validateQuery = <T extends ZodSchema>(schema: T) => {
 };
 
 export const validateParams = <T extends ZodSchema>(schema: T) => {
-  return (req: Request, _res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = schema.parse(req.params);
-      req.params = result as typeof req.params;
+      // Store validated params in res.locals for use in controllers
+      res.locals.validatedParams = result;
       next();
     } catch (error) {
       if (error instanceof ZodError) {

@@ -2,6 +2,9 @@ import express from 'express';
 import compression from 'compression';
 import morgan from 'morgan';
 
+// Import all models to register them with Mongoose before routes
+import './models';
+
 import { helmetMiddleware, corsMiddleware } from './middleware/security';
 import { rateLimiter } from './middleware/rateLimiter';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';

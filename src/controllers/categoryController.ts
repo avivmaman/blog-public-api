@@ -18,7 +18,7 @@ export const categoryController = {
 
   // GET /api/categories/:slug
   getCategoryBySlug: asyncHandler(async (req: Request, res: Response) => {
-    const { slug } = req.params as unknown as SlugParams;
+    const { slug } = (res.locals.validatedParams || req.params) as SlugParams;
     const category = await categoryService.getCategoryBySlug(slug);
 
     if (!category) {
@@ -33,8 +33,8 @@ export const categoryController = {
 
   // GET /api/categories/:slug/articles
   getCategoryArticles: asyncHandler(async (req: Request, res: Response) => {
-    const { slug } = req.params as unknown as SlugParams;
-    const { page, limit, sort } = req.query as unknown as PaginationQuery;
+    const { slug } = (res.locals.validatedParams || req.params) as SlugParams;
+    const { page = 1, limit = 10, sort = 'latest' } = (res.locals.validatedQuery || req.query) as PaginationQuery;
 
     // First get the category
     const category = await categoryService.getCategoryBySlug(slug);

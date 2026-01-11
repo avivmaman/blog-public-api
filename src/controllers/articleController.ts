@@ -8,7 +8,8 @@ import { PaginationQuery, SlugParams } from '../middleware/validation';
 export const articleController = {
   // GET /api/articles
   getArticles: asyncHandler(async (req: Request, res: Response) => {
-    const { page, limit, sort } = req.query as unknown as PaginationQuery;
+    // Use validated query from res.locals, fallback to parsing req.query
+    const { page = 1, limit = 10, sort = 'latest' } = (res.locals.validatedQuery || req.query) as PaginationQuery;
 
     const result = await articleService.getArticles({ page, limit, sort });
 
@@ -38,7 +39,7 @@ export const articleController = {
 
   // GET /api/articles/:slug
   getBySlug: asyncHandler(async (req: Request, res: Response) => {
-    const { slug } = req.params as unknown as SlugParams;
+    const { slug } = (res.locals.validatedParams || req.params) as SlugParams;
     const article = await articleService.getArticleBySlug(slug);
 
     if (!article) {
@@ -56,7 +57,7 @@ export const articleController = {
 
   // GET /api/articles/:slug/related
   getRelated: asyncHandler(async (req: Request, res: Response) => {
-    const { slug } = req.params as unknown as SlugParams;
+    const { slug } = (res.locals.validatedParams || req.params) as SlugParams;
     const limitParam = req.query.limit;
     const limit = typeof limitParam === 'string' ? parseInt(limitParam, 10) : 3;
 
@@ -70,7 +71,7 @@ export const articleController = {
 
   // GET /api/articles/:slug/comments
   getComments: asyncHandler(async (req: Request, res: Response) => {
-    const { slug } = req.params as unknown as SlugParams;
+    const { slug } = (res.locals.validatedParams || req.params) as SlugParams;
     const comments = await commentService.getCommentsByArticleSlug(slug);
 
     res.json({
