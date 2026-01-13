@@ -24,15 +24,19 @@ const categorySchema = new Schema<ICategoryDocument>(
     },
     icon: {
       type: String,
-      required: [true, 'Category icon is required'],
+      trim: true,
     },
-    gradient: {
+    color: {
       type: String,
-      required: true,
+      trim: true,
     },
-    accentClass: {
-      type: String,
-      required: true,
+    order: {
+      type: Number,
+      default: 0,
+    },
+    parent: {
+      type: Schema.Types.ObjectId,
+      ref: 'Category',
     },
   },
   {
@@ -40,7 +44,9 @@ const categorySchema = new Schema<ICategoryDocument>(
   }
 );
 
-// Index for fast slug lookups
+// Indexes
 categorySchema.index({ slug: 1 });
+categorySchema.index({ parent: 1 });
+categorySchema.index({ order: 1 });
 
 export const Category = mongoose.model<ICategoryDocument>('Category', categorySchema);

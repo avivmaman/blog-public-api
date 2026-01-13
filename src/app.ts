@@ -1,6 +1,7 @@
 import express from 'express';
 import compression from 'compression';
 import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
 
 // Import all models to register them with Mongoose before routes
 import './models';
@@ -10,6 +11,7 @@ import { rateLimiter } from './middleware/rateLimiter';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import routes from './routes';
 import { env } from './config/env';
+import { swaggerSpec } from './config/swagger';
 
 const app = express();
 
@@ -30,6 +32,18 @@ if (env.NODE_ENV !== 'test') {
 
 // Body parsing (minimal since this is a GET-only server)
 app.use(express.json({ limit: '1kb' }));
+
+// Swagger documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Blog API Documentation',
+}));
+
+// Swagger JSON endpoint
+app.get('/api/docs.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
 // API routes
 app.use('/api', routes);

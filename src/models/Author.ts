@@ -1,6 +1,16 @@
 import mongoose, { Schema } from 'mongoose';
 import { IAuthorDocument } from '../types';
 
+const socialSchema = new Schema(
+  {
+    twitter: { type: String, trim: true },
+    linkedin: { type: String, trim: true },
+    github: { type: String, trim: true },
+    website: { type: String, trim: true },
+  },
+  { _id: false }
+);
+
 const authorSchema = new Schema<IAuthorDocument>(
   {
     name: {
@@ -17,9 +27,14 @@ const authorSchema = new Schema<IAuthorDocument>(
       trim: true,
       match: [/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase alphanumeric with hyphens'],
     },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
     avatar: {
       type: String,
-      required: [true, 'Author avatar URL is required'],
+      trim: true,
     },
     role: {
       type: String,
@@ -29,6 +44,10 @@ const authorSchema = new Schema<IAuthorDocument>(
     bio: {
       type: String,
       maxlength: [1000, 'Bio cannot exceed 1000 characters'],
+    },
+    social: {
+      type: socialSchema,
+      default: {},
     },
   },
   {

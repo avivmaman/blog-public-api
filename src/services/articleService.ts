@@ -4,7 +4,7 @@ import { IArticleDocument } from '../types';
 interface PaginationOptions {
   page: number;
   limit: number;
-  sort: 'latest' | 'popular' | 'trending';
+  sort: 'latest' | 'popular' | 'trending' | 'oldest';
 }
 
 interface ArticleListResult {
@@ -20,8 +20,9 @@ const getSortOptions = (sort: string): Record<string, 1 | -1> => {
     case 'popular':
       return { views: -1, publishedAt: -1 };
     case 'trending':
-      // Trending: combination of views and recency
       return { views: -1, publishedAt: -1 };
+    case 'oldest':
+      return { publishedAt: 1 };
     case 'latest':
     default:
       return { publishedAt: -1 };
@@ -34,14 +35,15 @@ export const articleService = {
     const skip = (page - 1) * limit;
 
     const [articles, total] = await Promise.all([
-      Article.find()
-        .populate('category', 'name slug')
+      Article.find({ status: 'published' })
+        .populate('category', 'name slug color icon')
         .populate('author', 'name avatar role')
+        .populate('tags', 'name slug color')
         .sort(getSortOptions(sort))
         .skip(skip)
         .limit(limit)
         .lean(),
-      Article.countDocuments(),
+      Article.countDocuments({ status: 'published' }),
     ]);
 
     return {
@@ -54,18 +56,20 @@ export const articleService = {
   },
 
   async getArticleBySlug(slug: string): Promise<IArticleDocument | null> {
-    const article = await Article.findOne({ slug })
-      .populate('category', 'name slug description icon gradient accentClass')
-      .populate('author', 'name slug avatar role bio')
+    const article = await Article.findOne({ slug, status: 'published' })
+      .populate('category', 'name slug description icon color')
+      .populate('author', 'name slug avatar role bio social')
+      .populate('tags', 'name slug color')
       .lean();
 
     return article as IArticleDocument | null;
   },
 
   async getTrendingArticles(limit: number = 5): Promise<IArticleDocument[]> {
-    const articles = await Article.find()
+    const articles = await Article.find({ status: 'published' })
       .populate('category', 'name slug')
       .populate('author', 'name avatar')
+      .populate('tags', 'name slug color')
       .sort({ views: -1, publishedAt: -1 })
       .limit(limit)
       .lean();
@@ -73,8 +77,20 @@ export const articleService = {
     return articles as IArticleDocument[];
   },
 
+  async getFeaturedArticles(limit: number = 5): Promise<IArticleDocument[]> {
+    const articles = await Article.find({ status: 'published', isFeatured: true })
+      .populate('category', 'name slug')
+      .populate('author', 'name avatar')
+      .populate('tags', 'name slug color')
+      .sort({ publishedAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return articles as IArticleDocument[];
+  },
+
   async getRelatedArticles(slug: string, limit: number = 3): Promise<IArticleDocument[]> {
-    const article = await Article.findOne({ slug }).lean();
+    const article = await Article.findOne({ slug, status: 'published' }).lean();
 
     if (!article) {
       return [];
@@ -83,6 +99,7 @@ export const articleService = {
     // Find articles in the same category or with similar tags, excluding current article
     const relatedArticles = await Article.find({
       _id: { $ne: article._id },
+      status: 'published',
       $or: [
         { category: article.category },
         { tags: { $in: article.tags } },
@@ -90,6 +107,7 @@ export const articleService = {
     })
       .populate('category', 'name slug')
       .populate('author', 'name avatar')
+      .populate('tags', 'name slug color')
       .sort({ publishedAt: -1 })
       .limit(limit)
       .lean();
@@ -105,14 +123,15 @@ export const articleService = {
     const skip = (page - 1) * limit;
 
     const [articles, total] = await Promise.all([
-      Article.find({ category: categoryId })
+      Article.find({ category: categoryId, status: 'published' })
         .populate('category', 'name slug')
         .populate('author', 'name avatar role')
+        .populate('tags', 'name slug color')
         .sort(getSortOptions(sort))
         .skip(skip)
         .limit(limit)
         .lean(),
-      Article.countDocuments({ category: categoryId }),
+      Article.countDocuments({ category: categoryId, status: 'published' }),
     ]);
 
     return {
@@ -137,11 +156,11 @@ export const articleService = {
 
     // Create text search query
     const searchQuery = {
+      status: 'published',
       $or: [
         { title: { $regex: query, $options: 'i' } },
         { excerpt: { $regex: query, $options: 'i' } },
-        { content: { $regex: query, $options: 'i' } },
-        { tags: { $regex: query, $options: 'i' } },
+        { contentHtml: { $regex: query, $options: 'i' } },
       ],
     };
 
@@ -149,6 +168,7 @@ export const articleService = {
       Article.find(searchQuery)
         .populate('category', 'name slug')
         .populate('author', 'name avatar role')
+        .populate('tags', 'name slug color')
         .sort({ views: -1, publishedAt: -1 })
         .skip(skip)
         .limit(limit)

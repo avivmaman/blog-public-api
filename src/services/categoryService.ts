@@ -7,9 +7,9 @@ interface CategoryWithCount {
   name: string;
   slug: string;
   description: string;
-  icon: string;
-  gradient: string;
-  accentClass: string;
+  icon?: string;
+  color?: string;
+  order: number;
   articleCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -17,20 +17,20 @@ interface CategoryWithCount {
 
 export const categoryService = {
   async getAllCategories(): Promise<CategoryWithCount[]> {
-    const categories = await Category.find().lean();
+    const categories = await Category.find().sort({ order: 1 }).lean();
 
     // Get article counts for each category
     const categoriesWithCounts = await Promise.all(
       categories.map(async (category) => {
-        const articleCount = await Article.countDocuments({ category: category._id });
+        const articleCount = await Article.countDocuments({ category: category._id, status: 'published' });
         return {
           _id: category._id,
           name: category.name,
           slug: category.slug,
           description: category.description,
           icon: category.icon,
-          gradient: category.gradient,
-          accentClass: category.accentClass,
+          color: category.color,
+          order: category.order,
           articleCount,
           createdAt: category.createdAt,
           updatedAt: category.updatedAt,
@@ -48,7 +48,7 @@ export const categoryService = {
       return null;
     }
 
-    const articleCount = await Article.countDocuments({ category: category._id });
+    const articleCount = await Article.countDocuments({ category: category._id, status: 'published' });
 
     return {
       _id: category._id,
@@ -56,8 +56,8 @@ export const categoryService = {
       slug: category.slug,
       description: category.description,
       icon: category.icon,
-      gradient: category.gradient,
-      accentClass: category.accentClass,
+      color: category.color,
+      order: category.order,
       articleCount,
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,

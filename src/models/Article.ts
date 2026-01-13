@@ -10,6 +10,32 @@ const articleSectionSchema = new Schema(
   { _id: false }
 );
 
+const seoFieldsSchema = new Schema(
+  {
+    title: String,
+    description: String,
+    image: String,
+    noIndex: { type: Boolean, default: false },
+    canonicalUrl: String,
+  },
+  { _id: false }
+);
+
+const contentBlockSchema = new Schema(
+  {
+    type: {
+      type: String,
+      required: true,
+      enum: ['paragraph', 'heading', 'image', 'code', 'quote', 'list', 'divider', 'embed', 'table', 'callout', 'raw'],
+    },
+    data: {
+      type: Schema.Types.Mixed,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const articleSchema = new Schema<IArticleDocument>(
   {
     title: {
@@ -32,52 +58,62 @@ const articleSchema = new Schema<IArticleDocument>(
       maxlength: [500, 'Excerpt cannot exceed 500 characters'],
     },
     content: {
+      type: [contentBlockSchema],
+      default: [],
+    },
+    contentHtml: {
       type: String,
-      required: [true, 'Article content is required'],
+      default: '',
+    },
+    featuredImage: {
+      type: Schema.Types.ObjectId,
+      ref: 'Media',
     },
     image: {
       type: String,
-      required: [true, 'Article image URL is required'],
+      trim: true,
     },
     category: {
       type: Schema.Types.ObjectId,
       ref: 'Category',
       required: [true, 'Article category is required'],
     },
-    categoryColor: {
-      type: String,
-      enum: ['primary', 'secondary', 'accent'],
-      default: 'primary',
-    },
     author: {
       type: Schema.Types.ObjectId,
       ref: 'Author',
       required: [true, 'Article author is required'],
     },
+    tags: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Tag',
+    }],
+    status: {
+      type: String,
+      enum: ['draft', 'published', 'archived'],
+      default: 'draft',
+      index: true,
+    },
     readTime: {
       type: String,
-      required: [true, 'Read time is required'],
+      default: '5 min read',
     },
     views: {
       type: Number,
       default: 0,
       min: 0,
     },
-    isPublished: {
+    isFeatured: {
       type: Boolean,
       default: false,
     },
+    seo: {
+      type: seoFieldsSchema,
+      default: {},
+    },
+    sections: [articleSectionSchema],
     publishedAt: {
       type: Date,
     },
-    sections: [articleSectionSchema],
-    tags: [
-      {
-        type: String,
-        trim: true,
-        lowercase: true,
-      },
-    ],
   },
   {
     timestamps: true,
@@ -87,24 +123,36 @@ const articleSchema = new Schema<IArticleDocument>(
 // Indexes for common queries
 articleSchema.index({ slug: 1 });
 articleSchema.index({ category: 1 });
-articleSchema.index({ isPublished: 1, publishedAt: -1 });
+articleSchema.index({ author: 1 });
+articleSchema.index({ status: 1, publishedAt: -1 });
 articleSchema.index({ views: -1 });
 articleSchema.index({ tags: 1 });
+articleSchema.index({ isFeatured: 1 });
+
+// Auto-set publishedAt when status changes to published
+articleSchema.pre('save', function () {
+  if (this.isModified('status') && this.status === 'published' && !this.publishedAt) {
+    this.publishedAt = new Date();
+  }
+});
 
 // Only return published articles by default in queries
 articleSchema.pre('find', function () {
   const query = this.getQuery();
-  // Only apply filter if not explicitly querying for unpublished
-  if (query.isPublished === undefined) {
-    this.where({ isPublished: true });
+  // Only apply filter if not explicitly querying for status
+  if (query.status === undefined) {
+    this.where({ status: 'published' });
   }
 });
 
 articleSchema.pre('findOne', function () {
   const query = this.getQuery();
-  if (query.isPublished === undefined) {
-    this.where({ isPublished: true });
+  if (query.status === undefined) {
+    this.where({ status: 'published' });
   }
 });
+
+// Full-text search index
+articleSchema.index({ title: 'text', excerpt: 'text', contentHtml: 'text' });
 
 export const Article = mongoose.model<IArticleDocument>('Article', articleSchema);
