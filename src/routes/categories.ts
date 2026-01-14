@@ -4,13 +4,82 @@ import { validateQuery, validateParams, paginationSchema, slugSchema } from '../
 
 const router = Router();
 
-// GET /api/categories - List all categories
+/**
+ * @swagger
+ * /categories:
+ *   get:
+ *     summary: Get all categories
+ *     tags: [Categories]
+ *     responses:
+ *       200:
+ *         description: List of categories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Category'
+ */
 router.get('/', categoryController.getAllCategories);
 
-// GET /api/categories/:slug - Get single category by slug
+/**
+ * @swagger
+ * /categories/{slug}:
+ *   get:
+ *     summary: Get category by slug
+ *     tags: [Categories]
+ *     parameters:
+ *       - $ref: '#/components/parameters/slugParam'
+ *     responses:
+ *       200:
+ *         description: Category details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/Category'
+ *       404:
+ *         description: Category not found
+ */
 router.get('/:slug', validateParams(slugSchema), categoryController.getCategoryBySlug);
 
-// GET /api/categories/:slug/articles - Get articles by category
+/**
+ * @swagger
+ * /categories/{slug}/articles:
+ *   get:
+ *     summary: Get articles by category
+ *     tags: [Categories]
+ *     parameters:
+ *       - $ref: '#/components/parameters/slugParam'
+ *       - $ref: '#/components/parameters/pageParam'
+ *       - $ref: '#/components/parameters/limitParam'
+ *       - $ref: '#/components/parameters/sortParam'
+ *     responses:
+ *       200:
+ *         description: Articles in the category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Article'
+ *                 meta:
+ *                   $ref: '#/components/schemas/PaginationMeta'
+ */
 router.get(
   '/:slug/articles',
   validateParams(slugSchema),

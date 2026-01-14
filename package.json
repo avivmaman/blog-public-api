@@ -1,6 +1,6 @@
 {
-  "name": "aviv-m-ai-be",
-  "version": "1.0.0",
+  "name": "blog-public-api",
+  "version": "0.0.1",
   "description": "AI Blog API Server - Read-only Express API with MongoDB",
   "main": "dist/server.js",
   "scripts": {
@@ -18,7 +18,7 @@
     "mongodb"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "compression": "^1.8.1",
     "cors": "^2.8.5",

@@ -1,41 +1,49 @@
 import mongoose, { Schema } from 'mongoose';
-import { INavigationDocument, INavItem } from '../types';
+import { INavigationDocument } from '../types';
 
-const navItemSchema = new Schema<INavItem>(
-  {
-    label: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    url: {
-      type: String,
-      trim: true,
-    },
-    page: {
-      type: Schema.Types.ObjectId,
-      ref: 'Page',
-    },
-    target: {
-      type: String,
-      enum: ['_self', '_blank'],
-      default: '_self',
-    },
-    icon: {
-      type: String,
-      trim: true,
-    },
-    order: {
-      type: Number,
-      default: 0,
-    },
-    children: {
-      type: [this],
-      default: [],
-    },
+// Define nav item schema as a plain object first
+const navItemSchemaDefinition = {
+  label: {
+    type: String,
+    required: true,
+    trim: true,
   },
-  { _id: true }
-);
+  url: {
+    type: String,
+    trim: true,
+  },
+  page: {
+    type: Schema.Types.ObjectId,
+    ref: 'Page',
+  },
+  target: {
+    type: String,
+    enum: ['_self', '_blank'],
+    default: '_self',
+  },
+  icon: {
+    type: String,
+    trim: true,
+  },
+  order: {
+    type: Number,
+    default: 0,
+  },
+  children: {
+    type: Array,
+    default: [],
+  },
+};
+
+const navItemSchema = new Schema(navItemSchemaDefinition, { _id: true });
+
+// Add self-reference for children after schema is created
+navItemSchema.add({
+  children: {
+    type: [navItemSchema],
+    default: [],
+  },
+});
 
 const navigationSchema = new Schema<INavigationDocument>(
   {

@@ -30,3 +30,8 @@ coverage/
 # Misc
 *.tgz
 .npm
+
+# AI/Claude Code
+.claude/
+*.claude
+.ai/
