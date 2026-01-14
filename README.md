@@ -51,7 +51,7 @@ A read-only REST API for serving blog content to public frontends, built with Ex
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/blog-public-api.git
+git clone https://github.com/avivmaman/blog-public-api.git
 cd blog-public-api
 ```
 
@@ -192,5 +192,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Related Projects
 
-- [Blog Admin API](https://github.com/yourusername/blog-admin-api) - Admin backend API
-- [Blog Admin UI](https://github.com/yourusername/blog-admin-ui) - Admin dashboard
+This project is part of the **Blog Platform** ecosystem:
+
+| Project | Description |
+|---------|-------------|
+| [blog-admin-api](https://github.com/avivmaman/blog-admin-api) | Admin backend API |
+| [blog-admin-ui](https://github.com/avivmaman/blog-admin-ui) | Admin dashboard frontend |
+| [blog-public-api](https://github.com/avivmaman/blog-public-api) | Public-facing read-only API (this repo) |
